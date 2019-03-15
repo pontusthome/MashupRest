@@ -29,5 +29,13 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation('org.springframework.boot:spring-boot-starter-test')
     
-    implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'
+  	implementation('com.squareup.retrofit2:retrofit:2.4.0')
+  	implementation('com.squareup.retrofit2:converter-gson:2.4.0')
+    
+    implementation('org.eclipse.mylyn.github:org.eclipse.egit.github.core:2.1.5')
+    
+        
+    implementation('javax.xml.bind:jaxb-api:2.3.0')
+    
+    testImplementation("junit:junit")
 }
