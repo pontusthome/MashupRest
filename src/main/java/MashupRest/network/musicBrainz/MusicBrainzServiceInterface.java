@@ -1,5 +1,6 @@
 package MashupRest.network.musicBrainz;
 
+import MashupRest.network.musicBrainz.model.MusicBrainzArtistResponse;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Path;

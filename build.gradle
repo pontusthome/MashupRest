@@ -25,17 +25,25 @@ repositories {
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+ext {
+    retrofitVersion = "2.5.0"
+    okHttpVersion = "3.10.0"
+}
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
-    testImplementation('org.springframework.boot:spring-boot-starter-test')
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
     
-  	implementation('com.squareup.retrofit2:retrofit:2.4.0')
-  	implementation('com.squareup.retrofit2:converter-gson:2.4.0')
+  	implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
+  	implementation("com.squareup.retrofit2:converter-gson:$retrofitVersion")
+    implementation("com.squareup.retrofit2:converter-scalars:$retrofitVersion")
     
-    implementation('org.eclipse.mylyn.github:org.eclipse.egit.github.core:2.1.5')
-    
+    implementation("com.squareup.okhttp3:okhttp-urlconnection:$okHttpVersion")
+    implementation("com.squareup.okhttp3:logging-interceptor:$okHttpVersion")  
         
-    implementation('javax.xml.bind:jaxb-api:2.3.0')
+    implementation("org.json:json:20090211")
+        
+    implementation("javax.xml.bind:jaxb-api:2.3.0")
     
     testImplementation("junit:junit")
 }
