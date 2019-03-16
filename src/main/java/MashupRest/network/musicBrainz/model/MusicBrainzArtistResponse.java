@@ -7,7 +7,7 @@ public class MusicBrainzArtistResponse {
 	private String id;
 	private String name;
 	private String country;
-	private List<MusicBrainzRelations> relations;
+	private List<MusicBrainzRelation> relations;
 	
 	public String getId() {
 		return id;
@@ -21,7 +21,7 @@ public class MusicBrainzArtistResponse {
 		return country;
 	}
 	
-	public List<MusicBrainzRelations> getRelations() {
+	public List<MusicBrainzRelation> getRelations() {
 		return relations;
 	}
 }

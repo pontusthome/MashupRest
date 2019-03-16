@@ -1,9 +1,10 @@
-package MashupRest.network.wikidata;
+package MashupRest.network.wikipedia;
 
 import java.io.IOException;
 
 import org.springframework.stereotype.Service;
 
+import MashupRest.network.wikidata.WikidataServiceInterface;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
@@ -13,11 +14,11 @@ import retrofit2.Retrofit;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 @Service
-public class WikidataService implements WikidataConfiguration {
+public class WikipediaService implements WikipediaConfiguration {
 	
-    private WikidataServiceInterface service;
+    private WikipediaServiceInterface service;
 
-	public WikidataService() {
+	public WikipediaService() {
     	
     	HttpLoggingInterceptor logging = new HttpLoggingInterceptor();  
     	logging.setLevel(Level.BODY);
@@ -27,15 +28,15 @@ public class WikidataService implements WikidataConfiguration {
 
     	Retrofit retrofit = new Retrofit.Builder()
     			.client(httpClient.build())
-                .baseUrl(WIKIDATA_BASE_URL)
+                .baseUrl(WIKIPEDIA_BASE_URL)
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .build();
 
-        service = retrofit.create(WikidataServiceInterface.class);
+        service = retrofit.create(WikipediaServiceInterface.class);
     }
 
-    public String getArtist(String artistId) throws IOException {
-        Call<String> retrofitCall = service.getArtist(artistId, WIKIDATA_ARTIST_ACTION, WIKIDATA_RESPONSE_FORMAT, WIKIDATA_PROPS);
+    public String getWikiTitle(String wikiTitle) throws IOException {
+        Call<String> retrofitCall = service.getTitleQuery(wikiTitle, WIKIPEDIA_ACTION, WIKIPEDIA_RESPONSE_FORMAT, WIKIPEDIA_PROP, WIKIPEDIA_EXINTRO, WIKIPEDIA_REDIRECTS);
 
         Response<String> response = retrofitCall.execute();
 

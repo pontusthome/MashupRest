@@ -1,6 +1,6 @@
 package MashupRest.network.musicBrainz.model;
 
-public class MusicBrainzRelations {
+public class MusicBrainzRelation {
 	
 	private String type;
 	private MusicBrainzRelationsUrl url;

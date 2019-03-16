@@ -5,8 +5,6 @@ import java.io.IOException;
 import org.springframework.stereotype.Service;
 
 import MashupRest.network.musicBrainz.model.MusicBrainzArtistResponse;
-import MashupRest.network.musicBrainz.model.MusicBrainzRelations;
-import MashupRest.network.wikidata.WikidataService;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
