@@ -4,14 +4,14 @@ import java.io.IOException;
 
 import org.springframework.stereotype.Service;
 
-import MashupRest.network.wikidata.WikidataServiceInterface;
+import MashupRest.network.wikipedia.model.WikipediaResponse;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.converter.scalars.ScalarsConverterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 @Service
 public class WikipediaService implements WikipediaConfiguration {
@@ -29,16 +29,16 @@ public class WikipediaService implements WikipediaConfiguration {
     	Retrofit retrofit = new Retrofit.Builder()
     			.client(httpClient.build())
                 .baseUrl(WIKIPEDIA_BASE_URL)
-                .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
         service = retrofit.create(WikipediaServiceInterface.class);
     }
 
-    public String getWikiTitle(String wikiTitle) throws IOException {
-        Call<String> retrofitCall = service.getTitleQuery(wikiTitle, WIKIPEDIA_ACTION, WIKIPEDIA_RESPONSE_FORMAT, WIKIPEDIA_PROP, WIKIPEDIA_EXINTRO, WIKIPEDIA_REDIRECTS);
+    public WikipediaResponse getWikiTitle(String wikiTitle) throws IOException {
+        Call<WikipediaResponse> retrofitCall = service.getTitleQuery(wikiTitle, WIKIPEDIA_ACTION, WIKIPEDIA_RESPONSE_FORMAT, WIKIPEDIA_PROP, WIKIPEDIA_EXINTRO, WIKIPEDIA_REDIRECTS);
 
-        Response<String> response = retrofitCall.execute();
+        Response<WikipediaResponse> response = retrofitCall.execute();
 
         if (!response.isSuccessful()) {
             throw new IOException(response.errorBody() != null

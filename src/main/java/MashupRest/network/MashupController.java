@@ -15,14 +15,18 @@ import MashupRest.network.musicBrainz.MusicBrainzService;
 import MashupRest.network.musicBrainz.model.MusicBrainzArtistResponse;
 import MashupRest.network.musicBrainz.model.MusicBrainzRelation;
 import MashupRest.network.wikidata.WikidataService;
+import MashupRest.network.wikidata.model.WikidataEntity;
+import MashupRest.network.wikidata.model.WikidataResponse;
 import MashupRest.network.wikipedia.WikipediaService;
+import MashupRest.network.wikipedia.model.WikipediaResponse;
 
 @RestController
 public class MashupController {
 	
     static final String WIKIDATA_RELATION_TYPE = "wikidata";
     static final String WIKIDATA_RELATION_BASE_URL = "https://www.wikidata.org/wiki/";
-	
+    static final String WIKIPEDIA_EN_SITELINK = "enwiki";
+
     @Autowired
     private MusicBrainzService musicBrainzService;
 	
@@ -33,7 +37,7 @@ public class MashupController {
     private WikipediaService wikipediaService;
 
     @GetMapping("/artist/{artist}")
-    public String getArtist(@PathVariable("artist") String artistMBID) throws IOException {
+    public WikipediaResponse getArtist(@PathVariable("artist") String artistMBID) throws IOException {
     	
     	MusicBrainzArtistResponse musicBrainzArtist = musicBrainzService.getArtist(artistMBID);
         
@@ -42,14 +46,18 @@ public class MashupController {
 	        throw new IOException("Cannot find Wikidata artist Id from Music Brainz response");
         }
         
-        String wikidataJsonStr = wikidataService.getArtist(wikidataArtistId);
+        WikidataResponse wikidataResponse = wikidataService.getArtist(wikidataArtistId);
         
-        String enWikiTitle;
-        try {
-            enWikiTitle = findEnWikiTitle(wikidataJsonStr, wikidataArtistId);
-		} catch (JSONException e) {
-	        throw new IOException("Unable to parse response from Wikidata");
+		if (!wikidataResponse.getEntities().containsKey(wikidataArtistId)) {
+	        throw new IOException("Cannot find Wikidata artist Id in Music Brainz response");
 		}
+        WikidataEntity wikidataEntity = wikidataResponse.getEntities().get(wikidataArtistId);
+         
+		if (!wikidataEntity.getSitelinks().containsKey(WIKIPEDIA_EN_SITELINK)) {
+	        throw new IOException("Cannot find EN Wikipedia sitelink in Music Brainz response");
+		}
+		String enWikiTitle = wikidataEntity.getSitelinks().get(WIKIPEDIA_EN_SITELINK)
+				.getTitle();
         
         return wikipediaService.getWikiTitle(enWikiTitle);
     }
@@ -63,15 +71,5 @@ public class MashupController {
         }
  
         return null;
-    }
-    
-    private String findEnWikiTitle(String wikidataJsonStr, String wikidataArtistId) throws JSONException {
-        JSONObject wikidataJson = new JSONObject(wikidataJsonStr);
-        JSONObject wikidataEntities = wikidataJson.getJSONObject("entities");
-        JSONObject wikidataEntity = wikidataEntities.getJSONObject(wikidataArtistId);
-        JSONObject wikidataSiteLinks = wikidataEntity.getJSONObject("sitelinks");
-        JSONObject enWiki = wikidataSiteLinks.getJSONObject("enwiki");
-        
-        return enWiki.getString("title");
     }
 }

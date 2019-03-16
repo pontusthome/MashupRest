@@ -4,13 +4,14 @@ import java.io.IOException;
 
 import org.springframework.stereotype.Service;
 
+import MashupRest.network.wikidata.model.WikidataResponse;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.converter.scalars.ScalarsConverterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 @Service
 public class WikidataService implements WikidataConfiguration {
@@ -28,16 +29,16 @@ public class WikidataService implements WikidataConfiguration {
     	Retrofit retrofit = new Retrofit.Builder()
     			.client(httpClient.build())
                 .baseUrl(WIKIDATA_BASE_URL)
-                .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
         service = retrofit.create(WikidataServiceInterface.class);
     }
 
-    public String getArtist(String artistId) throws IOException {
-        Call<String> retrofitCall = service.getArtist(artistId, WIKIDATA_ARTIST_ACTION, WIKIDATA_RESPONSE_FORMAT, WIKIDATA_PROPS);
+    public WikidataResponse getArtist(String artistId) throws IOException {
+        Call<WikidataResponse> retrofitCall = service.getArtist(artistId, WIKIDATA_ARTIST_ACTION, WIKIDATA_RESPONSE_FORMAT, WIKIDATA_PROPS);
 
-        Response<String> response = retrofitCall.execute();
+        Response<WikidataResponse> response = retrofitCall.execute();
 
         if (!response.isSuccessful()) {
             throw new IOException(response.errorBody() != null
