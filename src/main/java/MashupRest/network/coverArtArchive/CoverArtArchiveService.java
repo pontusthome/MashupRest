@@ -54,9 +54,9 @@ public class CoverArtArchiveService implements CoverArtArchiveConfiguration {
 	        
 	        return CompletableFuture.completedFuture(response.body());
         } catch (IOException e) {
+        	// ToDo: Error handling
         	System.out.print("Failed to get Cover Art for MBID: " + MBID);
+            return CompletableFuture.completedFuture(null);
         }
-        
-        return null;
     }
 }

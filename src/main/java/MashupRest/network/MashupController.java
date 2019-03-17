@@ -45,6 +45,7 @@ public class MashupController {
     @Autowired
     private CoverArtArchiveService coverArtService;
 
+    // ToDo: Add error handling
     @GetMapping("/artist/{artist}")
     public MashupResponse getArtist(@PathVariable("artist") String artistMBID) throws IOException {
      	
@@ -52,10 +53,10 @@ public class MashupController {
     	
     	MusicBrainzArtistResponse musicBrainzArtist = musicBrainzService.getArtist(artistMBID);
     	
-    	CompletableFuture<String> description = fetchArtistDescription(musicBrainzArtist);
-		System.out.println("Sent requests for description");
+		String wikidataArtistId = findWikidataArtistId(musicBrainzArtist);
+
+    	CompletableFuture<String> description = fetchArtistDescription(wikidataArtistId);
 		CompletableFuture<List<MashupAlbum>> albums = fetchArtistAlbums(musicBrainzArtist);
-		System.out.println("Sent requests for albums");
 
     	CompletableFuture.allOf(description, albums).join();
 
@@ -69,22 +70,6 @@ public class MashupController {
         return mashupResponse;
     }
 
-    // ======== Get Artist description from Wikidata and Wikipedia ===============
-	@Async(ASYNC_EXECUTOR_BEAN_NAME)
-	private CompletableFuture<String> fetchArtistDescription(MusicBrainzArtistResponse musicBrainzArtist) {
-		String wikidataArtistId = findWikidataArtistId(musicBrainzArtist);
-		
-		WikidataResponse wikidataResponse = fetchWikidata(wikidataArtistId);
-		String enWikiTitle = wikidataResponse != null ? wikidataResponse.getSiteLinkTitle(wikidataArtistId, WIKIPEDIA_EN_SITELINK) : null;        
-		  
-		WikipediaPage wikipediaPage = fetchWikipediaPage(enWikiTitle);
-		if (wikipediaPage != null) {
-			return CompletableFuture.completedFuture(wikipediaPage.getExtract());
-		}
-		
-		return CompletableFuture.completedFuture(null);
-	}
-
 	private String findWikidataArtistId(MusicBrainzArtistResponse musicBrainzArtist) {
        	MusicBrainzRelation musicBrainzRelation = musicBrainzArtist.findRealtion(WIKIDATA_RELATION_TYPE);
        	if (musicBrainzRelation != null) {
@@ -94,45 +79,54 @@ public class MashupController {
  
         return null;
     }
-
-    private WikidataResponse fetchWikidata(String wikidataArtistId) {
-        if (wikidataArtistId != null) {
-        	try {
-				System.out.println("Got response from Wikidata");
-				return wikidataService.getArtist(wikidataArtistId);			    
-        	} catch (IOException e) {
-        		System.out.println("Unable to get Wikidata");
-        	}
-        }
-        else {
-    		System.out.println("Found no wikidata Artist Id");
-        }
-        
-        return null;
+    
+    // ======== Get Artist description from Wikidata and Wikipedia ===============
+	@Async(ASYNC_EXECUTOR_BEAN_NAME)
+	private CompletableFuture<String> fetchArtistDescription(String wikidataArtistId) {
+		if (wikidataArtistId != null) {
+			return CompletableFuture.completedFuture(null);
+		}
+		
+		return wikidataService.getArtist(wikidataArtistId)
+		.thenCompose(wikidataResponse -> fetchWikipediaPage(wikidataResponse, wikidataArtistId))
+		.thenCompose(wikipediaPage -> extractDescription(wikipediaPage));
 	}
 
-	private WikipediaPage fetchWikipediaPage(String enWikiTitle) {
-        if (enWikiTitle != null) {
-        	try {
-				WikipediaResponse wikipediaResponse = wikipediaService.getWikiTitle(enWikiTitle);
-				System.out.println("Got response from Wikipedia");
-				return wikipediaResponse.getFirstPage();
-        	} catch (IOException e) {
-        		System.out.println("Unable to get Wikipedia");
-        	} 
-        }
-        else {
-    		System.out.println("Found no Wikipedia title");
-        }
+	@Async(ASYNC_EXECUTOR_BEAN_NAME)
+	private CompletableFuture<WikipediaPage> fetchWikipediaPage(WikidataResponse wikidataResponse, String wikidataArtistId) {	
+		String enWikiTitle = wikidataResponse != null ? wikidataResponse.getSiteLinkTitle(wikidataArtistId, WIKIPEDIA_EN_SITELINK) : null;        
+		
+		if (enWikiTitle == null) {
+			return CompletableFuture.completedFuture(null);
+		}
 
-  		return null;
-    }
+		return wikipediaService.getWikiTitle(enWikiTitle)
+		.thenCompose(wikipediaResponse -> fetchWikipediaPage(wikipediaResponse, enWikiTitle));
+	}
 
-    // ======== Get Artist albums from Music Brainz response and cover art from Cover Art Archive ===============
+	@Async(ASYNC_EXECUTOR_BEAN_NAME)
+	private CompletableFuture<WikipediaPage> fetchWikipediaPage(WikipediaResponse wikipediaResponse, String enWikiTitle) {
+       if (wikipediaResponse == null) {
+			return CompletableFuture.completedFuture(null);
+       }
+       
+       return CompletableFuture.completedFuture(wikipediaResponse.getFirstPage());      
+	}
+
+	@Async(ASYNC_EXECUTOR_BEAN_NAME)
+	private CompletableFuture<String> extractDescription(WikipediaPage wikipediaPage) {
+		if (wikipediaPage == null) {
+			return CompletableFuture.completedFuture(null);
+		}
+			
+		return CompletableFuture.completedFuture(wikipediaPage.getExtract());
+	}
+
+
+	// ======== Get Artist albums from Music Brainz response and cover art from Cover Art Archive ===============
 	@Async(ASYNC_EXECUTOR_BEAN_NAME)
 	private CompletableFuture<List<MashupAlbum>> fetchArtistAlbums(MusicBrainzArtistResponse musicBrainzArtist) {
        List<MusicBrainzArtistReleaseGroup> albums = musicBrainzArtist.getAlbums();
-       albums = new ArrayList<>();
        return fetchAndAddCoverArtToAlbums(albums);
 	}
 

@@ -1,9 +1,14 @@
 package MashupRest.network.wikidata;
 
-import java.io.IOException;
+import static MashupRest.network.AsynchConfiguration.ASYNC_EXECUTOR_BEAN_NAME;
 
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import MashupRest.network.coverArtArchive.model.CoverArtArchiveResponse;
 import MashupRest.network.wikidata.model.WikidataResponse;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -35,16 +40,23 @@ public class WikidataService implements WikidataConfiguration {
         service = retrofit.create(WikidataServiceInterface.class);
     }
 
-    public WikidataResponse getArtist(String artistId) throws IOException {
+	@Async(ASYNC_EXECUTOR_BEAN_NAME)
+	public CompletableFuture<WikidataResponse> getArtist(String artistId) {
         Call<WikidataResponse> retrofitCall = service.getArtist(artistId, WIKIDATA_ARTIST_ACTION, WIKIDATA_RESPONSE_FORMAT, WIKIDATA_PROPS);
-
-        Response<WikidataResponse> response = retrofitCall.execute();
-
-        if (!response.isSuccessful()) {
-            throw new IOException(response.errorBody() != null
-                    ? response.errorBody().string() : "Unknown error");
+        
+        try {
+            Response<WikidataResponse> response = retrofitCall.execute();
+	
+	        if (!response.isSuccessful()) {
+	            throw new IOException(response.errorBody() != null
+	                    ? response.errorBody().string() : "Unknown error");
+	        }
+	        
+	        return CompletableFuture.completedFuture(response.body());
+        } catch (IOException e) {
+        	// ToDo: Error handling
+        	System.out.print("Failed to get Wikidata for artist: " + artistId);
+            return CompletableFuture.completedFuture(null);
         }
-
-        return response.body();
     }
 }
