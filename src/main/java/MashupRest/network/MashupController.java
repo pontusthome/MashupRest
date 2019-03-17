@@ -83,7 +83,7 @@ public class MashupController {
     // ======== Get Artist description from Wikidata and Wikipedia ===============
 	@Async(ASYNC_EXECUTOR_BEAN_NAME)
 	private CompletableFuture<String> fetchArtistDescription(String wikidataArtistId) {
-		if (wikidataArtistId != null) {
+		if (wikidataArtistId == null) {
 			return CompletableFuture.completedFuture(null);
 		}
 		
