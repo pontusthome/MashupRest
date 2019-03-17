@@ -1,7 +1,11 @@
 package MashupRest.network.coverArtArchive;
 
-import java.io.IOException;
+import static MashupRest.network.AsynchConfiguration.ASYNC_EXECUTOR_BEAN_NAME;
 
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import MashupRest.network.coverArtArchive.model.CoverArtArchiveResponse;
@@ -35,16 +39,24 @@ public class CoverArtArchiveService implements CoverArtArchiveConfiguration {
         service = retrofit.create(CoverArtArchiveServiceInterface.class);
     }
 
-    	public CoverArtArchiveResponse getCoverArt(String artistMBID) throws IOException {
-        Call<CoverArtArchiveResponse> retrofitCall = service.getCoverArt(artistMBID);
+    
+	@Async(ASYNC_EXECUTOR_BEAN_NAME)
+	public CompletableFuture<CoverArtArchiveResponse> getCoverArt(String MBID) {
+        Call<CoverArtArchiveResponse> retrofitCall = service.getCoverArt(MBID);
 
-        Response<CoverArtArchiveResponse> response = retrofitCall.execute();
-
-        if (!response.isSuccessful()) {
-            throw new IOException(response.errorBody() != null
-                    ? response.errorBody().string() : "Unknown error");
+        try {
+	        Response<CoverArtArchiveResponse> response = retrofitCall.execute();
+	
+	        if (!response.isSuccessful()) {
+	            throw new IOException(response.errorBody() != null
+	                    ? response.errorBody().string() : "Unknown error");
+	        }
+	        
+	        return CompletableFuture.completedFuture(response.body());
+        } catch (IOException e) {
+        	System.out.print("Failed to get Cover Art for MBID: " + MBID);
         }
         
-        return response.body();
+        return null;
     }
 }
