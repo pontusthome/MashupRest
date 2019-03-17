@@ -46,8 +46,10 @@ public class MashupController {
     private CoverArtArchiveService coverArtService;
 
     @GetMapping("/artist/{artist}")
-    public String getArtist(@PathVariable("artist") String artistMBID) throws IOException {
+    public MashupResponse getArtist(@PathVariable("artist") String artistMBID) throws IOException {
      	
+    	MashupResponse mashupResponse = new MashupResponse(artistMBID);
+    	
     	MusicBrainzArtistResponse musicBrainzArtist = musicBrainzService.getArtist(artistMBID);
     	
     	String wikidataArtistId = findWikidataArtistId(musicBrainzArtist);
@@ -56,12 +58,16 @@ public class MashupController {
         String enWikiTitle = wikidataResponse != null ? wikidataResponse.getSiteLinkTitle(wikidataArtistId, WIKIPEDIA_EN_SITELINK) : null;        
         
         WikipediaPage wikipediaPage = fetchWikipediaPage(enWikiTitle);
+        if (wikipediaPage != null) {
+        	mashupResponse.setDescription(wikipediaPage.getExtract());
+        }
         
         List<MusicBrainzArtistReleaseGroup> albums = musicBrainzArtist.getAlbums();
+        addAlbumsToResponse(mashupResponse, albums);
         
-        fetchCoverArtForAlbums(albums);
+        fetchAndAddCoverArtToAlbums(mashupResponse.getAlbums());
         
-        return wikipediaPage.getExtract();
+        return mashupResponse;
     }
 
 	private String findWikidataArtistId(MusicBrainzArtistResponse musicBrainzArtist) {
@@ -104,37 +110,27 @@ public class MashupController {
 
   		return null;
     }
-	
-	private List<CoverArtArchiveResponse> fetchCoverArtForAlbums(List<MusicBrainzArtistReleaseGroup> albums) {
-		List<CoverArtArchiveResponse> coverArtResponses = new ArrayList<>();
+
+	private void addAlbumsToResponse(MashupResponse mashupResponse, List<MusicBrainzArtistReleaseGroup> albums) {
+		List<MashupAlbum> mashupAlbums = new ArrayList<>();
 		for (MusicBrainzArtistReleaseGroup album: albums) {
-	    	try {
-	    		coverArtResponses.add(coverArtService.getCoverArt(album.getId()));		
-	    	} catch (IOException e) {
-	    		System.out.println("Unable to get a Cover Art");
-	    	}   
+			mashupAlbums.add(new MashupAlbum(album.getTitle(), album.getId()));
 		}
 		
-		return coverArtResponses;
+        mashupResponse.setAlbums(mashupAlbums);
+	}
+
+	private void fetchAndAddCoverArtToAlbums(List<MashupAlbum> albums) {
+		List<CoverArtArchiveResponse> coverArtResponses = new ArrayList<>();
+		for (MashupAlbum album: albums) {
+	    	try {
+	    		CoverArtArchiveResponse coverArt = coverArtService.getCoverArt(album.id);	
+	    		if (coverArt.getImages() != null && !coverArt.getImages().isEmpty()) {
+	    			album.setImage(coverArt.getImages().get(0).getImage());
+	    		}
+	    	} catch (IOException e) {
+	    		System.out.println("Unable to get a Cover Art for albumId: " + album.id);
+	    	}   
+		}
 	}
 }
-
-//{
-//"mbid" : "5b11f4ce-a62d-471e-81fc-a69a8278c7da",
-//"description" : "<p><b>Nirvana</b> was an American rock band that was
-//
-//formed ... osv osv ... ",
-//"albums" : [
-//{
-//"title" : "Nevermind",
-//"id": "1b022e01-4da6-387b-8658-8678046e4cef",
-//"image":
-//
-//"http://coverartarchive.org/release/a146429a-cedc-3ab0-9e41-1aaf5f6cdc2d/30124
-//95605.jpg"
-//},
-//{
-//... more albums...
-//}
-//]
-//}
