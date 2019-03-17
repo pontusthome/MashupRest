@@ -1,10 +1,10 @@
-package MashupRest.network.musicBrainz;
+package MashupRest.network.coverArtArchive;
 
 import java.io.IOException;
 
 import org.springframework.stereotype.Service;
 
-import MashupRest.network.musicBrainz.model.MusicBrainzArtistResponse;
+import MashupRest.network.coverArtArchive.model.CoverArtArchiveResponse;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
@@ -14,11 +14,11 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 @Service
-public class MusicBrainzService implements MusicBrainzConfiguration {
+public class CoverArtArchiveService implements CoverArtArchiveConfiguration {
+	
+    private CoverArtArchiveServiceInterface service;
 
-    private MusicBrainzServiceInterface service;
-
-    public MusicBrainzService() {
+    public CoverArtArchiveService() {
     	
     	HttpLoggingInterceptor logging = new HttpLoggingInterceptor();  
     	logging.setLevel(Level.BODY);
@@ -28,17 +28,17 @@ public class MusicBrainzService implements MusicBrainzConfiguration {
 
         Retrofit retrofit = new Retrofit.Builder()
         		.client(httpClient.build())
-                .baseUrl(MUSIC_BRAINZ_BASE_URL)
+                .baseUrl(COVER_ART_ARCHIVE_BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        service = retrofit.create(MusicBrainzServiceInterface.class);
+        service = retrofit.create(CoverArtArchiveServiceInterface.class);
     }
 
-    public MusicBrainzArtistResponse getArtist(String artistMBID) throws IOException {
-        Call<MusicBrainzArtistResponse> retrofitCall = service.getArtist(artistMBID, RESPONSE_FORMAT, ARTIST_INCLUDE);
+    	public CoverArtArchiveResponse getCoverArt(String artistMBID) throws IOException {
+        Call<CoverArtArchiveResponse> retrofitCall = service.getCoverArt(artistMBID);
 
-        Response<MusicBrainzArtistResponse> response = retrofitCall.execute();
+        Response<CoverArtArchiveResponse> response = retrofitCall.execute();
 
         if (!response.isSuccessful()) {
             throw new IOException(response.errorBody() != null

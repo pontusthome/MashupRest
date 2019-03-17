@@ -19,4 +19,12 @@ public class WikidataEntity {
 	public Map<String, WikidataSiteLink> getSitelinks() {
 		return sitelinks;
 	}
+
+	public String getSiteLink(String siteLinkTitle) {
+		if (sitelinks.containsKey(siteLinkTitle)) {
+			return sitelinks.get(siteLinkTitle).getTitle();
+		}
+		
+		return null;
+	}
 }
