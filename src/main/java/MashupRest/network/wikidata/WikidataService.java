@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import MashupRest.network.coverArtArchive.model.CoverArtArchiveResponse;
 import MashupRest.network.wikidata.model.WikidataResponse;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;

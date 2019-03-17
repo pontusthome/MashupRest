@@ -10,12 +10,14 @@ import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import MashupRest.network.coverArtArchive.CoverArtArchiveService;
 import MashupRest.network.coverArtArchive.model.CoverArtArchiveResponse;
+import MashupRest.network.error.ArtistNotFoundException;
 import MashupRest.network.musicBrainz.MusicBrainzService;
 import MashupRest.network.musicBrainz.model.MusicBrainzArtistReleaseGroup;
 import MashupRest.network.musicBrainz.model.MusicBrainzArtistResponse;
@@ -44,14 +46,19 @@ public class MashupController {
     
     @Autowired
     private CoverArtArchiveService coverArtService;
-
-    // ToDo: Add error handling
+    
     @GetMapping("/artist/{artist}")
-    public MashupResponse getArtist(@PathVariable("artist") String artistMBID) throws IOException {
+    @ExceptionHandler({ArtistNotFoundException.class})
+    public MashupResponse getArtist(@PathVariable("artist") String artistMBID) {
      	
     	MashupResponse mashupResponse = new MashupResponse(artistMBID);
     	
-    	MusicBrainzArtistResponse musicBrainzArtist = musicBrainzService.getArtist(artistMBID);
+    	MusicBrainzArtistResponse musicBrainzArtist;
+		try {
+			musicBrainzArtist = musicBrainzService.getArtist(artistMBID);
+		} catch (IOException e1) {
+			throw new ArtistNotFoundException("Artist not found");
+		}
     	
 		String wikidataArtistId = findWikidataArtistId(musicBrainzArtist);
 
